@@ -308,7 +308,10 @@
     <h2 style="margin-top:25px;">
       🗳️ 你的判斷
     </h2>
-
+<input
+  id="voterName"
+  placeholder="你的暱稱"
+>
     <div class="vote-buttons">
 
       <button
@@ -329,11 +332,20 @@
 
     <p id="voteMessage" class="small"></p>
 
-    <p>
-      🟢 <span id="yesCount">0</span>
-      　
-      🔴 <span id="noCount">0</span>
-    </p>
+   <p>
+  🟢 <span id="yesCount">0</span>
+  　
+  🔴 <span id="noCount">0</span>
+</p>
+
+<p class="small">
+  🟢 <span id="yesNames"></span>
+</p>
+
+<p class="small">
+  🔴 <span id="noNames"></span>
+</p>
+   
 
     <div class="bar">
       <div id="barFill" class="bar-fill"></div>
@@ -643,7 +655,7 @@ async function loadRequestById(id) {
   const { data: votes } =
     await supabaseClient
       .from("votes")
-      .select("vote")
+      .select("vote, voter_name")
       .eq("request_id", id);
 
 
@@ -685,6 +697,16 @@ async function loadRequestById(id) {
       (votes || [])
         .filter(v => v.vote === "no")
         .length,
+    
+    yesNames:
+  (votes || [])
+    .filter(v => v.vote === "yes")
+    .map(v => v.voter_name || "匿名朋友"),
+
+noNames:
+  (votes || [])
+    .filter(v => v.vote === "no")
+    .map(v => v.voter_name || "匿名朋友"),
 
     comments:
       comments || []
@@ -743,21 +765,28 @@ async function vote(type) {
 
   const voterId =
     getVoterId();
-
+  
+const voterName =
+  document
+    .getElementById("voterName")
+    .value
+    .trim() ||
+  "匿名朋友";
 
   const { error } =
     await supabaseClient
       .from("votes")
       .insert({
 
-        request_id: data.id,
+  request_id: data.id,
 
-        vote: type,
+  vote: type,
 
-        voter_id: voterId
+  voter_id: voterId,
 
-      });
+  voter_name: voterName
 
+});
 
   if (error) {
 
@@ -1033,7 +1062,14 @@ function render() {
   document
     .getElementById("noCount")
     .textContent = data.no;
+  
+document
+  .getElementById("yesNames")
+  .textContent = data.yesNames.join("、");
 
+document
+  .getElementById("noNames")
+  .textContent = data.noNames.join("、");
 
   const total =
     data.yes + data.no;
