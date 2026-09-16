@@ -222,7 +222,12 @@
   <section id="createPage" class="card">
 
     <h2>🛍️ 建立購物申請</h2>
+<label>👤 誰想買？</label>
 
+<input
+  id="buyerName"
+  placeholder="例如：linnn"
+>
     <label>想買什麼？</label>
     <input id="itemName" placeholder="例如：電影海報">
 
@@ -423,7 +428,11 @@ document
 /* 建立申請 */
 
 async function createRequest() {
-
+const buyerName =
+  document
+    .getElementById("buyerName")
+    .value
+    .trim();
   const name =
     document
       .getElementById("itemName")
@@ -499,21 +508,15 @@ if (document.getElementById("itemPhoto").files[0]) {
 
 }
 
-  const newRequest = {
-
-    id: id,
-
-    item_name: name,
-
-    price: price,
-
-    image_url: imageUrl,
-
-    reason: reason,
-
-    cooldown_hours: cooldown
-
-  };
+ const newRequest = {
+  id: id,
+  buyer_name: buyerName,
+  item_name: name,
+  price: price,
+  image_url: imageUrl,
+  reason: reason,
+  cooldown_hours: cooldown
+};
 
 
   const { error } =
@@ -656,7 +659,9 @@ async function loadRequestById(id) {
 
   data = {
 
-    id: request.id,
+    id: request.id, 
+    
+    buyerName: request.buyer_name,
 
     name: request.item_name,
 
@@ -881,7 +886,11 @@ function newRequest() {
   document
     .getElementById("createPage")
     .classList.remove("hidden");
-
+  
+document
+  .getElementById("buyerName")
+  .value = "";
+  
   document
     .getElementById("itemName")
     .value = "";
@@ -977,9 +986,13 @@ function render() {
         ""
       }
 
-      <h2 style="margin-top:16px;">
-        ${escapeHTML(data.name)}
-      </h2>
+     <div class="small">
+  👤 ${escapeHTML(data.buyerName)} 想買
+</div>
+
+<h2 style="margin-top:8px;">
+  ${escapeHTML(data.name)}
+</h2>
 
       <div class="price">
         NT$ ${Number(data.price).toLocaleString()}
