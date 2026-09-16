@@ -1050,41 +1050,60 @@ function render() {
     .style.width =
     percent + "%";
 
+document
+  .getElementById("comments")
+  .innerHTML =
+  data.comments
+    .map(comment => {
 
-  document
-    .getElementById("comments")
-    .innerHTML =
-    data.comments
-      .map(comment => {
+      const parts =
+        String(comment.content)
+          .split("|||");
 
-        const parts =
-          String(comment.content)
-            .split("|||");
+      const name =
+        parts[0] || "匿名朋友";
 
-        const name =
-          parts[0] || "匿名朋友";
+      const text =
+        parts.slice(1).join("|||");
 
-        const text =
-          parts.slice(1).join("|||");
+      const time =
+        new Date(comment.created_at)
+          .toLocaleString("zh-TW", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
 
-        return `
+      return `
 
-          <div class="comment">
+        <div class="comment">
 
-            <b>
-              ${escapeHTML(name)}
-            </b>
+          <b>
+            ${escapeHTML(name)}
+          </b>
 
-            <br>
+          <span
+            style="
+              font-size:12px;
+              color:#999;
+              margin-left:8px;
+            "
+          >
+            ${time}
+          </span>
 
-            ${escapeHTML(text)}
+          <br>
 
-          </div>
+          ${escapeHTML(text)}
 
-        `;
+        </div>
 
-      })
-      .join("");
+      `;
+
+    })
+    .join("");
 
 
   const voteButtons =
