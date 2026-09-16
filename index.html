@@ -1015,6 +1015,15 @@ function render() {
 }
 
 
+/* 每分鐘更新一次冷靜期 */
+
+setInterval(() => {
+
+  if (data) {
+    render();
+  }
+
+}, 60000);
 /* 複製連結 */
 
 function copyLink() {
