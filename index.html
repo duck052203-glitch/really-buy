@@ -690,11 +690,30 @@ async function loadRequestById(id) {
 }
 
 
+
 /* 投票 */
 
 async function vote(type) {
 
   if (!data) return;
+
+  const remaining =
+    Math.max(
+      0,
+      data.created +
+      data.cooldown * 3600000 -
+      Date.now()
+    );
+
+  if (remaining <= 0) {
+
+    document
+      .getElementById("voteMessage")
+      .textContent =
+      "⏰ 冷靜期已結束，投票截止。";
+
+    return;
+  }
 
 
   const voteKey =
@@ -991,6 +1010,7 @@ function render() {
 
     `;
 
+
   document
     .getElementById("yesCount")
     .textContent = data.yes;
@@ -998,6 +1018,7 @@ function render() {
   document
     .getElementById("noCount")
     .textContent = data.no;
+
 
   const total =
     data.yes + data.no;
@@ -1013,6 +1034,7 @@ function render() {
     .getElementById("barFill")
     .style.width =
     percent + "%";
+
 
   document
     .getElementById("comments")
@@ -1048,6 +1070,30 @@ function render() {
 
       })
       .join("");
+
+
+  const voteButtons =
+    document.querySelectorAll(
+      ".vote-buttons button"
+    );
+
+  voteButtons.forEach(button => {
+
+    button.disabled =
+      remaining <= 0;
+
+  });
+
+
+  if (remaining <= 0) {
+
+    document
+      .getElementById("voteMessage")
+      .textContent =
+      "⏰ 冷靜期已結束，投票截止。";
+
+  }
+
 }
 
 
