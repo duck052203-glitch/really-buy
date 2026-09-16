@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -543,20 +542,28 @@ async function showRequest() {
     .getElementById("requestPage")
     .classList.remove("hidden");
 
-  await loadRequest();
+  if (data && data.id) {
+    await loadRequestById(data.id);
+  }
 
 }
 
 
 /* 讀取申請 */
 
-async function loadRequest() {
+async function loadRequest(id = null) {
 
-  const id =
-    params.get("id");
+  const requestId =
+    id || params.get("id");
 
-  if (!id) return;
+  if (!requestId) return;
 
+  await loadRequestById(requestId);
+
+}
+
+
+async function loadRequestById(id) {
 
   const { data: request, error } =
     await supabaseClient
@@ -696,7 +703,7 @@ async function vote(type) {
     "已完成投票！";
 
 
-  await loadRequest();
+  await loadRequest(data.id);
 
 }
 
@@ -762,7 +769,7 @@ async function addComment() {
     .value = "";
 
 
-  await loadRequest();
+  await loadRequest(data.id);
 
 }
 
@@ -1004,4 +1011,3 @@ if (params.get("id")) {
 
 </body>
 </html>
-```
