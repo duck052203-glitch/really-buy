@@ -1,9 +1,12 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>真的要買嗎？</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * {
@@ -195,19 +198,14 @@
       word-break: break-all;
       font-size: 13px;
     }
+
+    .loading {
+      text-align: center;
+      color: #777;
+      padding: 30px 0;
+    }
   </style>
 </head>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://asewibkuhhgdqayxymbm.supabase.co";
-const SUPABASE_KEY = "sb_publishable_GXcRf7mkxLOjsbS56YcShA_LIWYjCH9";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-</script>
 
 <body>
 
@@ -278,19 +276,13 @@ const supabaseClient = window.supabase.createClient(
       大家點開就可以投票、留言。
     </p>
 
-    <div
-      id="shareLink"
-      class="share-link"
-    ></div>
+    <div id="shareLink" class="share-link"></div>
 
     <button onclick="copyLink()">
       複製連結
     </button>
 
-    <button
-      class="gray"
-      onclick="showRequest()"
-    >
+    <button class="gray" onclick="showRequest()">
       先看看審核頁
     </button>
 
@@ -300,7 +292,9 @@ const supabaseClient = window.supabase.createClient(
   <!-- 審核頁 -->
   <section id="requestPage" class="card hidden">
 
-    <div id="requestContent"></div>
+    <div id="requestContent">
+      <div class="loading">載入中……</div>
+    </div>
 
     <h2 style="margin-top:25px;">
       🗳️ 你的判斷
@@ -328,17 +322,13 @@ const supabaseClient = window.supabase.createClient(
 
     <p>
       🟢 <span id="yesCount">0</span>
-     　
+      　
       🔴 <span id="noCount">0</span>
     </p>
 
     <div class="bar">
-      <div
-        id="barFill"
-        class="bar-fill"
-      ></div>
+      <div id="barFill" class="bar-fill"></div>
     </div>
-
 
     <label>留言</label>
 
@@ -364,6 +354,19 @@ const supabaseClient = window.supabase.createClient(
 
 
 <script>
+
+const SUPABASE_URL =
+  "https://asewibkuhhgdqayxymbm.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_GXcRf7mkxLOjsbS56YcShA_LIWYjCH9";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
 
 let data = null;
 let photoData = "";
@@ -402,7 +405,7 @@ document
 
 /* 建立申請 */
 
-function createRequest() {
+async function createRequest() {
 
   const name =
     document
@@ -411,9 +414,11 @@ function createRequest() {
       .trim();
 
   const price =
-    document
-      .getElementById("itemPrice")
-      .value;
+    Number(
+      document
+        .getElementById("itemPrice")
+        .value
+    );
 
   const reason =
     document
@@ -439,32 +444,67 @@ function createRequest() {
   }
 
 
+  const id = crypto.randomUUID();
+
+
+  const newRequest = {
+
+    id: id,
+
+    item_name: name,
+
+    price: price,
+
+    image_url: photoData || null,
+
+    reason: reason,
+
+    cooldown_hours: cooldown
+
+  };
+
+
+  const { error } =
+    await supabaseClient
+      .from("requests")
+      .insert(newRequest);
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "建立失敗：" + error.message
+    );
+
+    return;
+  }
+
+
   data = {
 
-    id:
-      Math.random()
-        .toString(36)
-        .substring(2, 9),
+    id: id,
 
-    name,
-    price,
-    reason,
+    name: name,
+
+    price: price,
 
     photo: photoData,
 
-    cooldown,
+    reason: reason,
+
+    cooldown: cooldown,
 
     created: Date.now(),
 
     yes: 0,
+
     no: 0,
 
     comments: []
 
   };
-
-
-  save();
 
 
   const url =
@@ -491,21 +531,9 @@ function createRequest() {
 }
 
 
-/* 儲存 */
-
-function save() {
-
-  localStorage.setItem(
-    "buy_" + data.id,
-    JSON.stringify(data)
-  );
-
-}
-
-
 /* 顯示申請 */
 
-function showRequest() {
+async function showRequest() {
 
   document
     .getElementById("createdPage")
@@ -515,6 +543,90 @@ function showRequest() {
     .getElementById("requestPage")
     .classList.remove("hidden");
 
+  await loadRequest();
+
+}
+
+
+/* 讀取申請 */
+
+async function loadRequest() {
+
+  const id =
+    params.get("id");
+
+  if (!id) return;
+
+
+  const { data: request, error } =
+    await supabaseClient
+      .from("requests")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+
+  if (error || !request) {
+
+    document
+      .getElementById("requestContent")
+      .innerHTML =
+      "<p>找不到這個購物申請。</p>";
+
+    return;
+  }
+
+
+  const { data: votes } =
+    await supabaseClient
+      .from("votes")
+      .select("vote")
+      .eq("request_id", id);
+
+
+  const { data: comments } =
+    await supabaseClient
+      .from("comments")
+      .select("*")
+      .eq("request_id", id)
+      .order("created_at", {
+        ascending: true
+      });
+
+
+  data = {
+
+    id: request.id,
+
+    name: request.item_name,
+
+    price: request.price,
+
+    photo: request.image_url,
+
+    reason: request.reason,
+
+    cooldown: request.cooldown_hours,
+
+    created:
+      new Date(request.created_at).getTime(),
+
+    yes:
+      (votes || [])
+        .filter(v => v.vote === "yes")
+        .length,
+
+    no:
+      (votes || [])
+        .filter(v => v.vote === "no")
+        .length,
+
+    comments:
+      comments || []
+
+  };
+
+
   render();
 
 }
@@ -522,12 +634,17 @@ function showRequest() {
 
 /* 投票 */
 
-function vote(type) {
+async function vote(type) {
+
+  if (!data) return;
+
+
+  const voteKey =
+    "voted_" + data.id;
+
 
   if (
-    sessionStorage.getItem(
-      "voted_" + data.id
-    )
+    sessionStorage.getItem(voteKey)
   ) {
 
     document
@@ -540,34 +657,64 @@ function vote(type) {
   }
 
 
-  data[type]++;
+  const { error } =
+    await supabaseClient
+      .from("votes")
+      .insert({
+
+        request_id: data.id,
+
+        vote: type,
+
+        voter_id:
+          getVoterId()
+
+      });
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "投票失敗：" + error.message
+    );
+
+    return;
+  }
+
 
   sessionStorage.setItem(
-    "voted_" + data.id,
+    voteKey,
     type
   );
 
-  save();
-
-  render();
 
   document
     .getElementById("voteMessage")
     .textContent =
     "已完成投票！";
 
+
+  await loadRequest();
+
 }
 
 
 /* 留言 */
 
-function addComment() {
+async function addComment() {
+
+  if (!data) return;
+
 
   const name =
     document
       .getElementById("nickname")
       .value
-      .trim() || "匿名朋友";
+      .trim() ||
+    "匿名朋友";
+
 
   const text =
     document
@@ -585,15 +732,29 @@ function addComment() {
   }
 
 
-  data.comments.push({
+  const { error } =
+    await supabaseClient
+      .from("comments")
+      .insert({
 
-    name,
-    text
+        request_id: data.id,
 
-  });
+        content:
+          name + "|||" + text
+
+      });
 
 
-  save();
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "留言失敗：" + error.message
+    );
+
+    return;
+  }
 
 
   document
@@ -601,7 +762,34 @@ function addComment() {
     .value = "";
 
 
-  render();
+  await loadRequest();
+
+}
+
+
+/* 產生匿名使用者 ID */
+
+function getVoterId() {
+
+  let id =
+    localStorage.getItem(
+      "really_buy_voter_id"
+    );
+
+
+  if (!id) {
+
+    id = crypto.randomUUID();
+
+    localStorage.setItem(
+      "really_buy_voter_id",
+      id
+    );
+
+  }
+
+
+  return id;
 
 }
 
@@ -609,6 +797,9 @@ function addComment() {
 /* 顯示內容 */
 
 function render() {
+
+  if (!data) return;
+
 
   const remaining =
     Math.max(
@@ -623,6 +814,7 @@ function render() {
     Math.floor(
       remaining / 3600000
     );
+
 
   const minutes =
     Math.floor(
@@ -713,21 +905,37 @@ function render() {
     .getElementById("comments")
     .innerHTML =
     data.comments
-      .map(comment => `
+      .map(comment => {
 
-        <div class="comment">
+        const parts =
+          String(comment.content)
+            .split("|||");
 
-          <b>
-            ${escapeHTML(comment.name)}
-          </b>
 
-          <br>
+        const name =
+          parts[0] || "匿名朋友";
 
-          ${escapeHTML(comment.text)}
+        const text =
+          parts.slice(1).join("|||");
 
-        </div>
 
-      `)
+        return `
+
+          <div class="comment">
+
+            <b>
+              ${escapeHTML(name)}
+            </b>
+
+            <br>
+
+            ${escapeHTML(text)}
+
+          </div>
+
+        `;
+
+      })
       .join("");
 
 }
@@ -778,44 +986,22 @@ function escapeHTML(text) {
 
 /* 如果網址有申請 ID */
 
-function loadRequest() {
-
-  const id =
-    params.get("id");
-
-  if (!id) return;
-
-
-  const saved =
-    localStorage.getItem(
-      "buy_" + id
-    );
-
-
-  if (!saved) return;
-
-
-  data = JSON.parse(saved);
-
+if (params.get("id")) {
 
   document
     .getElementById("createPage")
     .classList.add("hidden");
 
-
   document
     .getElementById("requestPage")
     .classList.remove("hidden");
 
-
-  render();
+  loadRequest();
 
 }
-
-
-loadRequest();
 
 </script>
 
 </body>
 </html>
+```
