@@ -874,7 +874,6 @@ function render() {
 
   if (!data) return;
 
-
   const remaining =
     Math.max(
       0,
@@ -883,18 +882,20 @@ function render() {
       Date.now()
     );
 
-
   const hours =
     Math.floor(
       remaining / 3600000
     );
-
 
   const minutes =
     Math.floor(
       (remaining % 3600000) / 60000
     );
 
+  const seconds =
+    Math.floor(
+      (remaining % 60000) / 1000
+    );
 
   document
     .getElementById("requestContent")
@@ -937,7 +938,7 @@ function render() {
         ${
           remaining
           ?
-          `還剩 ${hours} 小時 ${minutes} 分鐘`
+          `還剩 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒`
           :
           "已結束"
         }
@@ -946,20 +947,16 @@ function render() {
 
     `;
 
-
   document
     .getElementById("yesCount")
     .textContent = data.yes;
-
 
   document
     .getElementById("noCount")
     .textContent = data.no;
 
-
   const total =
     data.yes + data.no;
-
 
   const percent =
     total
@@ -968,12 +965,10 @@ function render() {
     :
     0;
 
-
   document
     .getElementById("barFill")
     .style.width =
     percent + "%";
-
 
   document
     .getElementById("comments")
@@ -985,13 +980,11 @@ function render() {
           String(comment.content)
             .split("|||");
 
-
         const name =
           parts[0] || "匿名朋友";
 
         const text =
           parts.slice(1).join("|||");
-
 
         return `
 
@@ -1011,11 +1004,10 @@ function render() {
 
       })
       .join("");
-
 }
 
 
-/* 每分鐘更新一次冷靜期 */
+/* 每秒更新一次冷靜期 */
 
 setInterval(() => {
 
@@ -1023,7 +1015,10 @@ setInterval(() => {
     render();
   }
 
-}, 60000);
+}, 1000);
+
+
+
 /* 複製連結 */
 
 function copyLink() {
