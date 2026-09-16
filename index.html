@@ -709,6 +709,10 @@ async function vote(type) {
   }
 
 
+  const voterId =
+    getVoterId();
+
+
   const { error } =
     await supabaseClient
       .from("votes")
@@ -718,8 +722,7 @@ async function vote(type) {
 
         vote: type,
 
-        voter_id:
-          getVoterId()
+        voter_id: voterId
 
       });
 
@@ -727,6 +730,25 @@ async function vote(type) {
   if (error) {
 
     console.error(error);
+
+    if (
+      error.code === "23505"
+    ) {
+
+      sessionStorage.setItem(
+        voteKey,
+        type
+      );
+
+      document
+        .getElementById("voteMessage")
+        .textContent =
+        "你已經投過票了。";
+
+      return;
+
+    }
+
 
     alert(
       "投票失敗：" + error.message
