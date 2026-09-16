@@ -384,6 +384,12 @@ document
 
     if (!file) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert("照片不能超過 5MB");
+      event.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
 
     reader.onload = function() {
@@ -395,6 +401,7 @@ document
 
       preview.src = photoData;
       preview.style.display = "block";
+
     };
 
     reader.readAsDataURL(file);
@@ -444,7 +451,42 @@ async function createRequest() {
 
 
   const id = crypto.randomUUID();
+let imageUrl = null;
 
+if (document.getElementById("itemPhoto").files[0]) {
+
+  const file =
+    document.getElementById("itemPhoto").files[0];
+
+  const filePath =
+    id + "/" + file.name;
+
+  const { error: uploadError } =
+    await supabaseClient
+      .storage
+      .from("product-images")
+      .upload(filePath, file);
+
+  if (uploadError) {
+
+    console.error(uploadError);
+
+    alert(
+      "照片上傳失敗：" + uploadError.message
+    );
+
+    return;
+  }
+
+  imageUrl =
+    supabaseClient
+      .storage
+      .from("product-images")
+      .getPublicUrl(filePath)
+      .data
+      .publicUrl;
+
+}
 
   const newRequest = {
 
@@ -454,7 +496,7 @@ async function createRequest() {
 
     price: price,
 
-    image_url: photoData || null,
+    image_url: imageUrl,
 
     reason: reason,
 
