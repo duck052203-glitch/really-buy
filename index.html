@@ -362,11 +362,6 @@
 
 <label>留言</label>
 
-<input
-  id="nickname"
-  placeholder="你的暱稱"
->
-
 <textarea
   id="commentText"
   placeholder="例如：你不是已經有一個類似的了嗎？"
@@ -655,8 +650,8 @@ async function loadRequestById(id) {
   const { data: votes } =
     await supabaseClient
       .from("votes")
-      .select("vote, voter_name")
-      .eq("request_id", id);
+    .select("vote, voter_name, voter_id")
+    .eq("request_id", id);
 
 
   const { data: comments } =
@@ -707,6 +702,14 @@ noNames:
   (votes || [])
     .filter(v => v.vote === "no")
     .map(v => v.voter_name || "匿名朋友"),
+    
+    yesVoters:
+  (votes || [])
+    .filter(v => v.vote === "yes"),
+
+noVoters:
+  (votes || [])
+    .filter(v => v.vote === "no"),
 
     comments:
       comments || []
@@ -843,12 +846,12 @@ async function addComment() {
   if (!data) return;
 
 
-  const name =
-    document
-      .getElementById("nickname")
-      .value
-      .trim() ||
-    "匿名朋友";
+ const name =
+  document
+    .getElementById("voterName")
+    .value
+    .trim() ||
+  "匿名朋友";
 
 
   const text =
@@ -874,8 +877,8 @@ async function addComment() {
 
         request_id: data.id,
 
-        content:
-          name + "|||" + text
+content:
+  name + "|||" + text + "|||" + getVoterId()
 
       });
 
@@ -1096,11 +1099,24 @@ document
         String(comment.content)
           .split("|||");
 
-      const name =
-        parts[0] || "匿名朋友";
+     const name =
+  parts[0] || "匿名朋友";
 
-      const text =
-        parts.slice(1).join("|||");
+const text =
+  parts[1] || "";
+
+const voterId =
+  parts[2] || "";
+      const vote =
+  data.yesVoters?.find(
+    v => v.voter_id === voterId
+  )
+  ? "🟢 請買"
+  : data.noVoters?.find(
+      v => v.voter_id === voterId
+    )
+  ? "🔴 下面一位"
+  : "";
 
       const time =
         new Date(comment.created_at)
@@ -1117,7 +1133,8 @@ document
         <div class="comment">
 
           <b>
-            ${escapeHTML(name)}
+             ${escapeHTML(name)}
+           ${vote ? ` ${vote}` : ""}
           </b>
 
           <span
