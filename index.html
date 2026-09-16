@@ -348,10 +348,16 @@
       送出留言
     </button>
 
-    <div id="comments"></div>
+      <div id="comments"></div>
+
+    <button
+      onclick="newRequest()"
+      style="margin-top:20px;"
+    >
+      ＋ 新增商品
+    </button>
 
   </section>
-
 </div>
 
 
@@ -839,7 +845,45 @@ async function addComment() {
   await loadRequest(data.id);
 
 }
+/* 新增商品 */
 
+function newRequest() {
+
+  document
+    .getElementById("requestPage")
+    .classList.add("hidden");
+
+  document
+    .getElementById("createdPage")
+    .classList.add("hidden");
+
+  document
+    .getElementById("createPage")
+    .classList.remove("hidden");
+
+  document
+    .getElementById("itemName")
+    .value = "";
+
+  document
+    .getElementById("itemPrice")
+    .value = "";
+
+  document
+    .getElementById("itemReason")
+    .value = "";
+
+  document
+    .getElementById("itemPhoto")
+    .value = "";
+
+  document
+    .getElementById("photoPreview")
+    .style.display = "none";
+
+  photoData = "";
+
+}
 
 /* 產生匿名使用者 ID */
 
